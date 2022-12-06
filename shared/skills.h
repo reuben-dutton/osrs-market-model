@@ -2,13 +2,14 @@
 #define SKILLS_INCLUDED
 
 #include <stdbool.h>
+#include <string>
 
 class Skill {
     public:
         bool members;
-        const char* name;
+        std::string name;
 
-        Skill(bool isMembers, const char* skillName);
+        Skill(bool isMembers, std::string skillName);
 };
 
 // Free-to-play skills

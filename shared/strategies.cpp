@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <string>
 
 #include "strategies.h"
 
@@ -11,7 +12,7 @@
 int activity_profit(Market &market, Activity* activity) {
     int profit = 0;
 
-    for (const char* itemName : activity->requirements) {
+    for (std::string itemName : activity->requirements) {
         std::pair<int, int> margin = market.get_unit_prices(itemName);
         int price = std::max(margin.first, margin.second);
         if (!price) {
@@ -20,7 +21,7 @@ int activity_profit(Market &market, Activity* activity) {
         profit -= price;
     }
 
-    for (const char* itemName : activity->products) {
+    for (std::string itemName : activity->products) {
         std::pair<int, int> margin = market.get_unit_prices(itemName);
         int price = std::min(margin.first, margin.second);
         if (!price) {
@@ -34,7 +35,7 @@ int activity_profit(Market &market, Activity* activity) {
     return profit;
 }
 
-int DefaultPS::calculate_sell_price(Market &market, Activity* activity, const char* itemName, int prevFailures) {
+int DefaultPS::calculate_sell_price(Market &market, Activity* activity, std::string itemName, int prevFailures) {
     std::pair<int, int> margin = market.get_unit_prices(itemName);
     int buyPrice = margin.first;
     int sellPrice = margin.second;
@@ -64,7 +65,7 @@ int DefaultPS::calculate_sell_price(Market &market, Activity* activity, const ch
     return std::max(finalPrice, 1);
 }
 
-int DefaultPS::calculate_buy_price(Market &market, Activity* activity, const char* itemName, int prevFailures) {
+int DefaultPS::calculate_buy_price(Market &market, Activity* activity, std::string itemName, int prevFailures) {
     std::pair<int, int> margin = market.get_unit_prices(itemName);
     int buyPrice = margin.first;
     int sellPrice = margin.second;
@@ -96,7 +97,7 @@ int DefaultPS::calculate_buy_price(Market &market, Activity* activity, const cha
     return std::max(finalPrice, 1);
 }
 
-int GreedyPS::calculate_sell_price(Market &market, Activity* activity, const char* itemName, int prevFailures) {
+int GreedyPS::calculate_sell_price(Market &market, Activity* activity, std::string itemName, int prevFailures) {
     std::pair<int, int> margin = market.get_unit_prices(itemName);
     int buyPrice = margin.first;
     int sellPrice = margin.second;
@@ -118,7 +119,7 @@ int GreedyPS::calculate_sell_price(Market &market, Activity* activity, const cha
     return std::max(finalPrice, 1);
 }
 
-int GreedyPS::calculate_buy_price(Market &market, Activity* activity, const char* itemName, int prevFailures) {
+int GreedyPS::calculate_buy_price(Market &market, Activity* activity, std::string itemName, int prevFailures) {
     std::pair<int, int> margin = market.get_unit_prices(itemName);
     int buyPrice = margin.first;
     int sellPrice = margin.second;

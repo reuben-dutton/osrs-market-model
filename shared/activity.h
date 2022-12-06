@@ -4,22 +4,23 @@
 #include <stdbool.h>
 #include <map>
 #include <vector>
+#include <string>
 
 class Activity {
     public:
-        const char* name;
-        std::vector<const char*> requirements;
-        std::vector<const char*> products;
+        std::string name;
+        std::vector<std::string> requirements;
+        std::vector<std::string> products;
         int moneyOutput;
         int moneyInput;
 
-        Activity(const char* _name);
-        void add_requirement(const char* itemName);
-        void add_product(const char* itemName);
+        Activity(std::string _name);
+        void add_requirement(std::string itemName);
+        void add_product(std::string itemName);
         void add_money_output(int _moneyOutput);
         void add_money_input(int _moneyInput);
         void print_activity();
-        bool has_required_items(std::map<const char*, int> bank);
+        bool has_required_items(std::map<std::string, int> bank);
 };
 
 class Activities {

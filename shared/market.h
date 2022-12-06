@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <string>
 
 #include "items.h"
 
@@ -23,11 +24,11 @@ class Trade {
         int unitProgressFiat; // actual total cost of units sold/bought so far
         TradeStatus status; // current status of the trade
 
-        Trade(bool _isSelling, int _unitPrice, const char* _unitName, int _unitCount);
+        Trade(bool _isSelling, int _unitPrice, std::string _unitName, int _unitCount);
         bool is_null();
         bool is_ongoing();
         bool is_selling();
-        const char* get_unit_name();
+        std::string get_unit_name();
         int units_left();
         void update_status();
         void cancel();
@@ -37,25 +38,25 @@ class Trade {
     
     protected:
         bool isSelling; // selling or buying
-        const char* unitName; // item name
+        std::string unitName; // item name
 };
 
 class TradeID {
     public:
         bool isSelling;
-        const char* unitName;
+        std::string unitName;
         std::pair<int, int> tradeMapKey;
 
-        TradeID(bool _isSelling, const char* _unitName, std::pair<int, int> _tradeMapKey);
+        TradeID(bool _isSelling, std::string _unitName, std::pair<int, int> _tradeMapKey);
 };
 
 // trade map has keys of <unitPrice, uid> so they are ordered by price
 // values are Trade classes which contain trade information & status
 typedef std::map<std::pair<int, int>, Trade> TradeMap;
 // market register is unordered; keys are item names
-typedef std::unordered_map<const char*, TradeMap> MarketRegister;
+typedef std::unordered_map<std::string, TradeMap> MarketRegister;
 // recording the avg prices of items
-typedef std::unordered_map<const char*, std::pair<int, int>> PriceRecord;
+typedef std::unordered_map<std::string, std::pair<int, int>> PriceRecord;
 
 // represents the GE
 class Market {
@@ -69,17 +70,17 @@ class Market {
         
         Market();
         void print_market(bool onlyMargin);
-        TradeMap &get_buy_trades(const char* unitName);
-        TradeMap &get_sell_trades(const char* unitName);
-        TradeID create_buy_trade(int unitPrice, const char* unitName, int unitCount);
-        TradeID create_sell_trade(int unitPrice, const char* unitName, int unitCount);
+        TradeMap &get_buy_trades(std::string unitName);
+        TradeMap &get_sell_trades(std::string unitName);
+        TradeID create_buy_trade(int unitPrice, std::string unitName, int unitCount);
+        TradeID create_sell_trade(int unitPrice, std::string unitName, int unitCount);
         void fill_new_trade(Trade &trade);
         Trade &check_trade(TradeID tradeID);
         Trade cancel_trade(TradeID tradeID);
 
-        void update_unit_prices(const char* unitName);
-        std::pair<int, int> get_unit_prices(const char* unitName);
-        void print_unit_prices(const char* unitName);
+        void update_unit_prices(std::string unitName);
+        std::pair<int, int> get_unit_prices(std::string unitName);
+        void print_unit_prices(std::string unitName);
 
     private:
         int currentTradeID;

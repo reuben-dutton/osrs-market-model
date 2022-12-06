@@ -12,6 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
+#include <string>
 
 
 #include "market.h"
@@ -21,6 +22,7 @@
 
 #define DEFAULT_NUM_ITERATIONS 10000
 #define DEFAULT_DATA_PATH "sim.dat"
+#define DEFAULT_ITEM_NAME "Coal"
 
 
 /*
@@ -30,7 +32,8 @@ struct Parameters {
     int numIterations = DEFAULT_NUM_ITERATIONS;
     // dataPath determines where to save the binary simulation output
     // compiler gives a warning if not cast explicitly
-    char* dataPath = (char*)DEFAULT_DATA_PATH;
+    std::string dataPath = DEFAULT_DATA_PATH;
+    std::string itemName = DEFAULT_ITEM_NAME;
 };
 
 
@@ -39,9 +42,9 @@ struct Parameters {
 Initializes the command-line arguments and places them into the Parameters
 struct
 */
-void initParams(int argc, char** argv, Parameters *params) {
+void initParams(int argc, char* const* argv, Parameters *params) {
     int c;
-    while ((c = getopt(argc, argv, "i:o:")) != -1) {
+    while ((c = getopt(argc, argv, "i:o:u:")) != -1) {
         switch (c) {
             case 'i':
                 params->numIterations = atoi(optarg);
@@ -49,11 +52,14 @@ void initParams(int argc, char** argv, Parameters *params) {
             case 'o':
                 params->dataPath = optarg;
                 break;
+            case 'u':
+                params->itemName = optarg;
+                break;
         }
     }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char* const* argv) {
     srand(123);
 
     Parameters params = Parameters{};
@@ -63,7 +69,7 @@ int main(int argc, char** argv) {
 
     std::vector<Agent> agents = {};
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 15; i++) {
         Agent agent = Agent();
         agent.activity = Activities::MineRunite();
         agent.priceStrategy = PriceStrategies::Default();
@@ -117,7 +123,7 @@ int main(int argc, char** argv) {
         market.print_market(false);
         std::cout << std::endl;
 
-        margin = market.get_unit_prices("Runite Ore");
+        margin = market.get_unit_prices(params.itemName);
 
         if (i <= 0) {
             continue;

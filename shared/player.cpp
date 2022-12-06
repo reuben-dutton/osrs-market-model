@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <random>
+#include <string>
 
 #include "market.h"
 #include "player.h"
@@ -22,7 +23,7 @@ void Agent::print_agent() {
     std::cout << money << "gp " << std::endl;
     auto it = bank.begin();
     while (it != bank.end()) {
-        const char* itemName = it->first;
+        std::string itemName = it->first;
         int itemCount = it->second;
         std::cout << itemName << " x" << itemCount << std::endl;
         it++;
@@ -38,14 +39,14 @@ void Agent::remove_money(int _money) {
     money -= _money;
 }
 
-void Agent::add_item(const char* itemName, int itemCount) {
+void Agent::add_item(std::string itemName, int itemCount) {
     if (bank.find(itemName) == bank.end()) {
         bank[itemName] = 0;
     }
     bank[itemName] += itemCount;
 }
 
-void Agent::remove_item(const char* itemName, int itemCount) {
+void Agent::remove_item(std::string itemName, int itemCount) {
     if (bank.find(itemName) == bank.end()) {
         bank[itemName] = 0;
     }
@@ -96,12 +97,12 @@ void Agent::act(Market &market) {
 
 void Agent::create_listings(Market &market, bool doingActivity) {
 
-    std::vector<const char*> needs = activity->requirements;
+    std::vector<std::string> needs = activity->requirements;
 
     // iterate over items in bank
     auto it = bank.begin();
     while (it != bank.end()) {
-        const char* itemName = it->first;
+        std::string itemName = it->first;
         // if the item is not a requirement for our activity,
         if (std::find(needs.begin(), needs.end(), itemName) == needs.end()) {
             int itemCount = it->second;
@@ -118,7 +119,7 @@ void Agent::create_listings(Market &market, bool doingActivity) {
     // create listings to purchase activity requirements
     // for the next period
     if (doingActivity) {
-        for (const char* itemName : needs) {
+        for (std::string itemName : needs) {
             this->create_buy_listing(market, itemName, 1);
         }
     }
@@ -129,7 +130,7 @@ void Agent::check_listings(Market &market) {
     while (it != trades.end()) {
         TradeID tradeID = *it;
         Trade trade = market.check_trade(tradeID);
-        const char* itemName = trade.get_unit_name();
+        std::string itemName = trade.get_unit_name();
 
         if (trade.status == TradeStatus::ONGOING) {
             // remove the trade
@@ -174,15 +175,15 @@ void Agent::remove_listing(Market &market, TradeID tradeID) {
 }
 
 void Agent::perform_activity() {
-    for (const char* itemName : activity->requirements) {
+    for (std::string itemName : activity->requirements) {
         this->remove_item(itemName, 1);
     }
-    for (const char* itemName : activity->products) {
+    for (std::string itemName : activity->products) {
         this->add_item(itemName, 1);
     }
 }
 
-void Agent::create_sell_listing(Market &market, const char* unitName, int unitCount) {
+void Agent::create_sell_listing(Market &market, std::string unitName, int unitCount) {
     // calculate price
     // int price = 100;
     int price = this->priceStrategy->calculate_sell_price(market, this->activity, unitName, tradeFailures[unitName]);
@@ -195,7 +196,7 @@ void Agent::create_sell_listing(Market &market, const char* unitName, int unitCo
     this->remove_item(unitName, unitCount);
 }
 
-void Agent::create_buy_listing(Market &market, const char* unitName, int unitCount) {
+void Agent::create_buy_listing(Market &market, std::string unitName, int unitCount) {
     // get price
     // int price = 100;
     int price = this->priceStrategy->calculate_buy_price(market, this->activity, unitName, tradeFailures[unitName]);

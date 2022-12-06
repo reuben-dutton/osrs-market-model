@@ -3,3 +3,4 @@ object/
 osrsmodel
 *.txt
 *.dat
+run.sh

@@ -3,12 +3,13 @@
 #include <iostream>
 #include <stdbool.h>
 #include <cmath>
+#include <string>
 
 #include "market.h"
 #include "items.h"
 
 
-Trade::Trade(bool _isSelling, int _unitPrice, const char* _unitName, int _unitCount) {
+Trade::Trade(bool _isSelling, int _unitPrice, std::string _unitName, int _unitCount) {
     isSelling = _isSelling;
     unitPrice = _unitPrice;
     unitName = _unitName;
@@ -30,7 +31,7 @@ bool Trade::is_selling() {
     return isSelling;
 }
 
-const char* Trade::get_unit_name() {
+std::string Trade::get_unit_name() {
     return unitName;
 }
 
@@ -105,7 +106,7 @@ void Trade::print_trade() {
     std::cout << std::endl;
 }
 
-TradeID::TradeID(bool _isSelling, const char* _unitName, std::pair<int, int> _tradeMapKey) {
+TradeID::TradeID(bool _isSelling, std::string _unitName, std::pair<int, int> _tradeMapKey) {
     isSelling = _isSelling;
     unitName = _unitName;
     tradeMapKey = _tradeMapKey;
@@ -162,7 +163,7 @@ int Market::get_trade_id() {
     return currentTradeID++;
 }
 
-TradeMap &Market::get_buy_trades(const char* unitName) {
+TradeMap &Market::get_buy_trades(std::string unitName) {
     TradeMap emptyTradeMap = {};
     auto result = buyRegister.emplace(unitName, emptyTradeMap);
     // '.' to get the first in pair
@@ -172,7 +173,7 @@ TradeMap &Market::get_buy_trades(const char* unitName) {
     return currentTrades;
 }
 
-TradeMap &Market::get_sell_trades(const char* unitName) {
+TradeMap &Market::get_sell_trades(std::string unitName) {
     TradeMap emptyTradeMap = {};
     auto result = sellRegister.emplace(unitName, emptyTradeMap);
     // '.' to get the first in pair
@@ -182,7 +183,7 @@ TradeMap &Market::get_sell_trades(const char* unitName) {
     return currentTrades;
 }
 
-TradeID Market::create_buy_trade(int unitPrice, const char* unitName, int unitCount) {
+TradeID Market::create_buy_trade(int unitPrice, std::string unitName, int unitCount) {
     Trade newTrade = Trade(false, unitPrice, unitName, unitCount);
     newTrade.status = TradeStatus::ONGOING;
 
@@ -202,7 +203,7 @@ TradeID Market::create_buy_trade(int unitPrice, const char* unitName, int unitCo
     return newTradeID;
 }
 
-TradeID Market::create_sell_trade(int unitPrice, const char* unitName, int unitCount) {
+TradeID Market::create_sell_trade(int unitPrice, std::string unitName, int unitCount) {
     Trade newTrade = Trade(true, unitPrice, unitName, unitCount);
     newTrade.status = TradeStatus::ONGOING;
 
@@ -222,7 +223,7 @@ TradeID Market::create_sell_trade(int unitPrice, const char* unitName, int unitC
 }
 
 void Market::fill_new_trade(Trade &trade) {
-    const char* unitName = trade.get_unit_name();
+    std::string unitName = trade.get_unit_name();
     if (trade.is_selling()) {
         TradeMap &currentTrades = this->get_buy_trades(unitName);
         // largest buy price to smallest,
@@ -328,7 +329,7 @@ Trade Market::cancel_trade(TradeID tradeID) {
 }
 
 
-void Market::update_unit_prices(const char* unitName) {
+void Market::update_unit_prices(std::string unitName) {
 
     int buyPrice = 0; // buy price margin (low)
     int sellPrice = 0; // sell price margin (high)
@@ -372,15 +373,15 @@ void Market::update_unit_prices(const char* unitName) {
     margins.emplace(unitName, margin);
 }
 
-std::pair<int, int> Market::get_unit_prices(const char* unitName) {
+std::pair<int, int> Market::get_unit_prices(std::string unitName) {
     try {
         return margins.at(unitName);
     } catch (const std::out_of_range &exc) {
         return std::make_pair(0, 0);
-    } 
+    }
 }
 
-void Market::print_unit_prices(const char* unitName) {
+void Market::print_unit_prices(std::string unitName) {
     std::pair<int, int> margin = margins.at(unitName);
     std::cout << unitName << " | ";
     std::cout << "buy/low: " << margin.first << "gp ";

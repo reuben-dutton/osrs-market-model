@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 # path = "sim.dat"
 path = sys.argv[1]
+itemName = sys.argv[2]
 data = np.fromfile(path, dtype=np.int32)
 
 # timestep, prey pop, pred pop read as integers
@@ -16,7 +17,7 @@ pred = data[2::3]
 
 plt.plot(t, prey, label="buy")
 plt.plot(t, pred, label="sell")
-plt.title("Rune Platebody")
+plt.title(itemName)
 plt.xlabel("Timestep")
 plt.ylabel("gp")
 plt.legend(loc="center right")

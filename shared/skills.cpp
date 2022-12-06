@@ -2,6 +2,7 @@
 #define INIT_P2P_SKILL(name) Skill name = Skill(true, "name")
 
 #include <stdio.h>
+#include <string>
 #include <cmath>
 
 #include "skills.h"
@@ -10,7 +11,7 @@ int expDiff(int level) {
     return 0.25f*floor(level - 1 + 300*(powf(2, (level-1)/7)));
 }
 
-Skill::Skill(bool isMembers, const char* skillName) {
+Skill::Skill(bool isMembers, std::string skillName) {
     members = isMembers;
     name = skillName;
 }

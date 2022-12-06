@@ -9,8 +9,6 @@ HEADER=-I./shared -I./object
 default : all
 
 all: osrsmodel
-	./osrsmodel > output.txt
-	python3 plotData.py sim.dat
 
 osrsmodel: object/main.o object/skills.o object/items.o object/market.o object/player.o object/activity.o object/strategies.o
 	$(CXX) $(HEADER) $(CXXFLAGS) $^ -o $@

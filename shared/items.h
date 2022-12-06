@@ -2,5 +2,6 @@
 #define ITEMS_INCLUDED
 
 #include <map>
+#include <string>
 
 #endif

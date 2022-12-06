@@ -4,21 +4,22 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <string>
 
 #include "activity.h"
 
 
-Activity::Activity(const char* _name) {
+Activity::Activity(std::string _name) {
     name = _name;
     moneyOutput = 0;
     moneyInput = 0;
 }
 
-void Activity::add_requirement(const char* itemName) {
+void Activity::add_requirement(std::string itemName) {
     requirements.push_back(itemName);
 }
 
-void Activity::add_product(const char* itemName) {
+void Activity::add_product(std::string itemName) {
     products.push_back(itemName);
 }
 
@@ -30,9 +31,9 @@ void Activity::add_money_input(int _moneyInput) {
     moneyInput = _moneyInput;
 }
 
-bool Activity::has_required_items(std::map<const char*, int> bank) {
+bool Activity::has_required_items(std::map<std::string, int> bank) {
     bool has_items = true;
-    for (const char* itemName : requirements) {
+    for (std::string itemName : requirements) {
         auto it = bank.find(itemName);
         if (it != bank.end()) {
             int itemCount = it->second;
@@ -48,7 +49,7 @@ void Activity::print_activity() {
     std::cout << name << std::endl;
     std::cout << "Requirements: ";
     if (requirements.size() > 0) {
-        for (const char* itemName : requirements) {
+        for (std::string itemName : requirements) {
             std::cout << itemName << "   ";
         }
         std::cout << std::endl;
@@ -57,7 +58,7 @@ void Activity::print_activity() {
     }
     std::cout << "Products: ";
     if (products.size() > 0) {
-        for (const char* itemName : products) {
+        for (std::string itemName : products) {
             std::cout << itemName << "   ";
         }
         std::cout << std::endl;
