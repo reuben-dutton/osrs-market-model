@@ -21,7 +21,7 @@ plt.title(itemName)
 plt.xlabel("Timestep")
 plt.ylabel("gp")
 plt.legend(loc="center right")
-plt.savefig("plot.png")
+plt.savefig(f"plots/{itemName}.png")
 
 # btw, the output plot will look different depending on whether it's run on
 # getfix or your local machine (or at least it does on mine)

@@ -2,7 +2,7 @@
 #define STRATEGIES_INCLUDED
 
 #ifndef SIMULATION_SPEED
-#define SIMULATION_SPEED 100
+#define SIMULATION_SPEED 10
 #endif
 
 #include <string>

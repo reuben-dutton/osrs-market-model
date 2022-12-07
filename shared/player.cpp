@@ -65,7 +65,7 @@ void Agent::act(Market &market) {
     bool caresAboutProfit = distrib(gen) < 95;
 
     // the worse the profit, the more likely not to perform that activity
-    bool lazy = distrib(gen) < (100 - std::min(10000, activityProfit)*0.01);
+    bool lazy = distrib(gen) < (80 - std::min(10000, activityProfit)*0.01);
     // lazy = false;
 
     // activity switching // /// /// // // / // // // // /
@@ -97,21 +97,29 @@ void Agent::act(Market &market) {
 
 void Agent::create_listings(Market &market, bool doingActivity) {
 
-    std::vector<std::string> needs = activity->requirements;
+    std::vector<std::pair<std::string, int>> needs = activity->requirements;
 
-    // iterate over items in bank
+    // iterate over items in bank to sell
+    // this should be made more intricate later
     auto it = bank.begin();
     while (it != bank.end()) {
-        std::string itemName = it->first;
-        // if the item is not a requirement for our activity,
-        if (std::find(needs.begin(), needs.end(), itemName) == needs.end()) {
-            int itemCount = it->second;
-            if (!itemCount) {
-                it++;
-                continue;
+        std::string bankItemName = it->first;
+        int bankItemCount = it->second;
+
+        bool itemRequired = false;
+
+        // iterate over required items
+        for (std::pair<std::string, int> need : needs) {
+            std::string requireItemName = need.first;
+            // our current bank item is a requirement
+            if (bankItemName == requireItemName) {
+                itemRequired = true;
             }
+        }
+        // if the item is not required for our activity
+        if (!itemRequired && bankItemCount > 0) {
             // sell the entire stack
-            this->create_sell_listing(market, itemName, itemCount);
+            this->create_sell_listing(market, bankItemName, bankItemCount);
         }
         it++;
     }
@@ -119,8 +127,10 @@ void Agent::create_listings(Market &market, bool doingActivity) {
     // create listings to purchase activity requirements
     // for the next period
     if (doingActivity) {
-        for (std::string itemName : needs) {
-            this->create_buy_listing(market, itemName, 1);
+        for (std::pair<std::string, int> need : needs) {
+            std::string itemName = need.first;
+            int itemCount = need.second;
+            this->create_buy_listing(market, itemName, itemCount);
         }
     }
 }
@@ -175,11 +185,15 @@ void Agent::remove_listing(Market &market, TradeID tradeID) {
 }
 
 void Agent::perform_activity() {
-    for (std::string itemName : activity->requirements) {
-        this->remove_item(itemName, 1);
+    for (std::pair<std::string, int> requirement : activity->requirements) {
+        std::string itemName = requirement.first;
+        int itemCount = requirement.second;
+        this->remove_item(itemName, itemCount);
     }
-    for (std::string itemName : activity->products) {
-        this->add_item(itemName, 1);
+    for (std::pair<std::string, int> product : activity->products) {
+        std::string itemName = product.first;
+        int itemCount = product.second;
+        this->add_item(itemName, itemCount);
     }
 }
 

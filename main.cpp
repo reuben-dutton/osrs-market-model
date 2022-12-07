@@ -69,14 +69,14 @@ int main(int argc, char* const* argv) {
 
     std::vector<Agent> agents = {};
 
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < 2; i++) {
         Agent agent = Agent();
         agent.activity = Activities::MineRunite();
         agent.priceStrategy = PriceStrategies::Default();
         agents.push_back(agent);
     }
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 5; i++) {
         Agent agent = Agent();
         agent.activity = Activities::MineCoal();
         agent.priceStrategy = PriceStrategies::Default();
@@ -90,14 +90,21 @@ int main(int argc, char* const* argv) {
         agents.push_back(agent);
     }
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 10; i++) {
         Agent agent = Agent();
         agent.activity = Activities::SmithRunePlatebody();
         agent.priceStrategy = PriceStrategies::Default();
         agents.push_back(agent);
     }
 
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 3; i++) {
+        Agent agent = Agent();
+        agent.activity = Activities::CraftNatureRunes();
+        agent.priceStrategy = PriceStrategies::Default();
+        agents.push_back(agent);
+    }
+
+    for (int i = 0; i < 15; i++) {
         Agent agent = Agent();
         agent.activity = Activities::AlchRunePlatebody();
         agent.priceStrategy = PriceStrategies::Default();
@@ -115,6 +122,8 @@ int main(int argc, char* const* argv) {
 
     std::pair<int, int> margin;
 
+    TradeID shockID = TradeID(false, "null", std::make_pair(0, 0));
+
     for (int i = 0; i < params.numIterations; i++) {
         for (Agent &agent : agents) {
             agent.act(market);
@@ -125,18 +134,22 @@ int main(int argc, char* const* argv) {
 
         margin = market.get_unit_prices(params.itemName);
 
-        if (i <= 0) {
+        if (i <= 5000) {
             continue;
+        }
+
+        if (i == 7500) {
+            shockID = market.create_sell_trade(8000, "Runite Ore", 500);
+        } else if (i > 7500) {
+            Trade shock = market.check_trade(shockID);
+            if (shock.status == TradeStatus::SUCCESS) {
+                market.cancel_trade(shockID);
+            }
         }
         
         wf.write(reinterpret_cast<const char*>(&i), sizeof(int32_t));
         wf.write(reinterpret_cast<const char*>(&(margin.first)), sizeof(int32_t));
         wf.write(reinterpret_cast<const char*>(&(margin.second)), sizeof(int32_t));
-
-
-
-        // std::cout << activity_profit(market, Activities::SmithRunePlatebody()) << std::endl;
-        // std::cout << activity_profit(market, Activities::AlchRunePlatebody()) << std::endl;
     }
 
     wf.close();

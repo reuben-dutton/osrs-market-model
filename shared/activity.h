@@ -9,14 +9,14 @@
 class Activity {
     public:
         std::string name;
-        std::vector<std::string> requirements;
-        std::vector<std::string> products;
+        std::vector<std::pair<std::string, int>> requirements;
+        std::vector<std::pair<std::string, int>> products;
         int moneyOutput;
         int moneyInput;
 
         Activity(std::string _name);
-        void add_requirement(std::string itemName);
-        void add_product(std::string itemName);
+        void add_requirement(std::string itemName, int itemCount);
+        void add_product(std::string itemName, int itemCount);
         void add_money_output(int _moneyOutput);
         void add_money_input(int _moneyInput);
         void print_activity();
@@ -30,6 +30,7 @@ class Activities {
         static Activity* _smithRuniteBar;
         static Activity* _smithRunePlatebody;
         static Activity* _alchRunePlatebody;
+        static Activity* _craftNatureRunes;
 
     public:
         static Activity* MineRunite();
@@ -37,6 +38,7 @@ class Activities {
         static Activity* SmithRuniteBar();
         static Activity* SmithRunePlatebody();
         static Activity* AlchRunePlatebody();
+        static Activity* CraftNatureRunes();
 };
 
 #endif

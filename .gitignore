@@ -3,4 +3,5 @@ object/
 osrsmodel
 *.txt
 *.dat
-run.sh
+*.sh
+plots/

@@ -12,22 +12,26 @@
 int activity_profit(Market &market, Activity* activity) {
     int profit = 0;
 
-    for (std::string itemName : activity->requirements) {
+    for (std::pair<std::string, int> requirement : activity->requirements) {
+        std::string itemName = requirement.first;
+        int itemCount = requirement.second;
         std::pair<int, int> margin = market.get_unit_prices(itemName);
         int price = std::max(margin.first, margin.second);
         if (!price) {
             return 1;
         }
-        profit -= price;
+        profit -= price*itemCount;
     }
 
-    for (std::string itemName : activity->products) {
+    for (std::pair<std::string, int> product : activity->products) {
+        std::string itemName = product.first;
+        int itemCount = product.second;
         std::pair<int, int> margin = market.get_unit_prices(itemName);
         int price = std::min(margin.first, margin.second);
         if (!price) {
             return 1;
         }
-        profit += price;
+        profit += price*itemCount;
     }
 
     profit -= activity->moneyInput;
