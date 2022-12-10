@@ -1,10 +1,6 @@
 #ifndef STRATEGIES_INCLUDED
 #define STRATEGIES_INCLUDED
 
-#ifndef SIMULATION_SPEED
-#define SIMULATION_SPEED 10
-#endif
-
 #include <string>
 
 #include "market.h"
@@ -12,32 +8,15 @@
 
 class PriceStrategy {
     public:
-        virtual int calculate_sell_price(Market &market, Activity* activity, std::string itemName, int prevFailures) = 0;
-        virtual int calculate_buy_price(Market &market, Activity* activity, std::string itemName, int prevFailures) = 0;
+        PriceStrategy(int _impatience, int _profitMotive);
+        int calculate_sell_price(Market &market, Activity* activity, int turnDuration, std::string itemName, int prevFailures);
+        int calculate_buy_price(Market &market, Activity* activity, int turnDuration, std::string itemName, int prevFailures);
+
+    protected:
+        int impatience;
+        int profitMotive;
 };
 
-class DefaultPS : public PriceStrategy {
-    public:
-        int calculate_sell_price(Market &market, Activity* activity, std::string itemName, int prevFailures);
-        int calculate_buy_price(Market &market, Activity* activity, std::string itemName, int prevFailures);
-};
-
-class GreedyPS : public PriceStrategy {
-    public:
-        int calculate_sell_price(Market &market, Activity* activity, std::string itemName, int prevFailures);
-        int calculate_buy_price(Market &market, Activity* activity, std::string itemName, int prevFailures);
-};
-
-class PriceStrategies {
-    private:
-        static PriceStrategy* _default;
-        static PriceStrategy* _greedy;
-
-    public:
-        static PriceStrategy* Default();
-        static PriceStrategy* Greedy();
-};
-
-int activity_profit(Market &market, Activity* activity);
+int activity_profit(Market &market, Activity* activity, int turnDuration);
 
 #endif

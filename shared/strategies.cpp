@@ -9,7 +9,7 @@
 #include "strategies.h"
 
 
-int activity_profit(Market &market, Activity* activity) {
+int activity_profit(Market &market, Activity* activity, int turnDuration) {
     int profit = 0;
 
     for (std::pair<std::string, int> requirement : activity->requirements) {
@@ -27,7 +27,7 @@ int activity_profit(Market &market, Activity* activity) {
         std::string itemName = product.first;
         int itemCount = product.second;
         std::pair<int, int> margin = market.get_unit_prices(itemName);
-        int price = std::min(margin.first, margin.second);
+        int price = std::max(margin.first, margin.second);
         if (!price) {
             return 1;
         }
@@ -36,15 +36,23 @@ int activity_profit(Market &market, Activity* activity) {
 
     profit -= activity->moneyInput;
     profit += activity->moneyOutput;
+
+    profit = profit * ((float)turnDuration / (float)activity->duration);
+
     return profit;
 }
 
-int DefaultPS::calculate_sell_price(Market &market, Activity* activity, std::string itemName, int prevFailures) {
+PriceStrategy::PriceStrategy(int _impatience, int _profitMotive) {
+    impatience = _impatience;
+    profitMotive = _profitMotive;
+}
+
+int PriceStrategy::calculate_sell_price(Market &market, Activity* activity, int turnDuration, std::string itemName, int prevFailures) {
     std::pair<int, int> margin = market.get_unit_prices(itemName);
     int buyPrice = margin.first;
     int sellPrice = margin.second;
 
-    int activityProfit = activity_profit(market, activity);
+    int activityProfit = activity_profit(market, activity, turnDuration);
 
     int finalPrice;
     
@@ -57,24 +65,47 @@ int DefaultPS::calculate_sell_price(Market &market, Activity* activity, std::str
         finalPrice = sellPrice;
     }
 
-    bool profitable = (activityProfit - SIMULATION_SPEED > 0);
+    // agents with more motivation to make profit will be more stringent when undercutting/overpricing
+    // 0 profit motive -> 10% under/over, 100 profit motive -> 0.1% under/over
+    double smallAdjTend = ((100 - profitMotive) * 0.01)*10 + 1;
+    double largeAdjTend = ((100 - profitMotive) * 0.01) * (finalPrice * 0.001);
+    int minPriceAdjustment = std::max((int)largeAdjTend, (int)smallAdjTend);
+    // minPriceAdjustment = 10;
+    double failureAdj = (minPriceAdjustment * (prevFailures + 1) * impatience * 0.001);
+    minPriceAdjustment += (int)failureAdj;
+
+    // maximum possible adjustment (in the case that the activity is unsuccessful) is the current profit
+    // adjusted by a factor corresponding to the agent's impatience (higher impatience, higher adjustment)
+    int failurePriceAdjustment = std::max((activityProfit * (impatience / 100)), minPriceAdjustment);
+    // failurePriceAdjustment = 10;
+
+    // maximum possible adjustment (in the case that the activity is successful) is a proportion of the
+    // current price, adjusted by a factor corresponding to the agent's motivation to seek profit
+    // (this maxes out at 10%, minimal is minPriceAdjustment)
+    int successPriceAdjustment = std::max((finalPrice * (profitMotive / 1000)), minPriceAdjustment);
+    // successPriceAdjustment = 10;
+
+    int minProfit = profitMotive * 0.01 * 10000 * ((float)turnDuration / (float)activity->duration);
+    // is the activity profitable?
+    bool profitable = (activityProfit - ((float)turnDuration / (float)activity->duration) > minProfit);
     bool successful = (prevFailures < 2);
 
     if (successful) {
-        finalPrice += SIMULATION_SPEED;
+        finalPrice += successPriceAdjustment;
     } else if (profitable) {
-        finalPrice -= SIMULATION_SPEED; 
+        // finalPrice -= failurePriceAdjustment * prevFailures; 
+        finalPrice -= failurePriceAdjustment;
     }
 
     return std::max(finalPrice, 1);
 }
 
-int DefaultPS::calculate_buy_price(Market &market, Activity* activity, std::string itemName, int prevFailures) {
+int PriceStrategy::calculate_buy_price(Market &market, Activity* activity, int turnDuration, std::string itemName, int prevFailures) {
     std::pair<int, int> margin = market.get_unit_prices(itemName);
     int buyPrice = margin.first;
     int sellPrice = margin.second;
 
-    int activityProfit = activity_profit(market, activity);
+    int activityProfit = activity_profit(market, activity, turnDuration);
 
     int finalPrice;
 
@@ -87,78 +118,38 @@ int DefaultPS::calculate_buy_price(Market &market, Activity* activity, std::stri
         finalPrice = buyPrice;
     }
 
+    // agents with more motivation to make profit will be more stringent when undercutting/overpricing
+    // 0 profit motive -> 20% under/over, 100 profit motive -> 0.1% under/over
+    double smallAdjTend = ((100 - profitMotive) * 0.01)*10 + 1;
+    double largeAdjTend = ((100 - profitMotive) * 0.005) * (finalPrice * 0.001);
+    int minPriceAdjustment = std::max((int)largeAdjTend, (int)smallAdjTend);
+    // minPriceAdjustment = 10;
+    double failureAdj = (minPriceAdjustment * (prevFailures + 1) * impatience * 0.001);
+    minPriceAdjustment += (int)failureAdj;
+
+    // maximum possible adjustment (in the case that the activity is unsuccessful) is the current profit
+    // adjusted by a factor corresponding to the agent's impatience (higher impatience, higher adjustment)
+    int failurePriceAdjustment = std::max((activityProfit * (impatience / 100)), minPriceAdjustment);
+    // failurePriceAdjustment = 10;
+
+    // maximum possible adjustment (in the case that the activity is successful) is a proportion of the
+    // current price, adjusted by a factor corresponding to the agent's motivation to seek profit
+    // (this maxes out at 10%, minimal is minPriceAdjustment)
+    int successPriceAdjustment = std::max((finalPrice * (profitMotive / 1000)), minPriceAdjustment);
+    // successPriceAdjustment = 10;
+
+    int minProfit = profitMotive * 0.01 * 10000 * ((float)turnDuration / (float)activity->duration);
     // is the activity profitable?
-    bool profitable = (activityProfit - SIMULATION_SPEED > 0);
+    bool profitable = (activityProfit - ((float)turnDuration / (float)activity->duration) > minProfit);
     // have our trade offers been successful?
     bool successful = (prevFailures < 2);
 
     if (successful) {
-        finalPrice -= SIMULATION_SPEED;
+        finalPrice -= successPriceAdjustment;
     } else if (profitable) {
-        finalPrice += SIMULATION_SPEED;
+        // finalPrice += failurePriceAdjustment * prevFailures;
+        finalPrice += failurePriceAdjustment;
     }
 
     return std::max(finalPrice, 1);
-}
-
-int GreedyPS::calculate_sell_price(Market &market, Activity* activity, std::string itemName, int prevFailures) {
-    std::pair<int, int> margin = market.get_unit_prices(itemName);
-    int buyPrice = margin.first;
-    int sellPrice = margin.second;
-
-    int finalPrice;
-    
-    if (!buyPrice && !sellPrice) {
-        finalPrice = 100;
-    }
-
-    if (!sellPrice) {
-        finalPrice = (int)buyPrice*1.01;
-    }
-
-    finalPrice = sellPrice + 1 + (int)sellPrice*0.03;
-
-    finalPrice -= (int)finalPrice*0.1*prevFailures;
-
-    return std::max(finalPrice, 1);
-}
-
-int GreedyPS::calculate_buy_price(Market &market, Activity* activity, std::string itemName, int prevFailures) {
-    std::pair<int, int> margin = market.get_unit_prices(itemName);
-    int buyPrice = margin.first;
-    int sellPrice = margin.second;
-
-    int finalPrice;
-
-    if (!buyPrice && !sellPrice) {
-        finalPrice = 100;
-    }
-
-    if (!buyPrice) {
-        finalPrice = (int)sellPrice*0.9;
-    }
-
-    finalPrice = buyPrice - 1 - (int)buyPrice*0.03;
-
-    finalPrice += (int)finalPrice*0.1*prevFailures;
-
-    return std::max(finalPrice, 1);
-}
-
-PriceStrategy* PriceStrategies::_default;
-
-PriceStrategy* PriceStrategies::Default() {
-    if (_default == NULL) {
-        _default = new DefaultPS();
-    }
-    return _default;
-}
-
-PriceStrategy* PriceStrategies::_greedy;
-
-PriceStrategy* PriceStrategies::Greedy() {
-    if (_greedy == NULL) {
-        _greedy = new GreedyPS();
-    }
-    return _greedy;
 }

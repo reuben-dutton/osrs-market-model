@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <cmath>
+#include <random>
 #include <algorithm>
 #include <cstdlib>
 #include <time.h>
@@ -65,53 +66,58 @@ int main(int argc, char* const* argv) {
     Parameters params = Parameters{};
     initParams(argc, argv, &params);
 
+    int turnDuration = 500;
+
     Market market = Market();
 
     std::vector<Agent> agents = {};
 
-    for (int i = 0; i < 2; i++) {
-        Agent agent = Agent();
+    int defaultImpatience = 75;
+    int defaultProfitMotive = 20;
+
+    thread_local std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    thread_local std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> impatienceDistr(10, 75);
+    std::uniform_int_distribution<> profitDistr(20, 60);
+
+    // initialize agents
+    for (int i = 0; i < 10; i++) {
+        Agent agent = Agent(turnDuration, impatienceDistr(gen), profitDistr(gen));
         agent.activity = Activities::MineRunite();
-        agent.priceStrategy = PriceStrategies::Default();
         agents.push_back(agent);
     }
 
-    for (int i = 0; i < 5; i++) {
-        Agent agent = Agent();
+    for (int i = 0; i < 10; i++) {
+        Agent agent = Agent(turnDuration, impatienceDistr(gen), profitDistr(gen));
         agent.activity = Activities::MineCoal();
-        agent.priceStrategy = PriceStrategies::Default();
         agents.push_back(agent);
     }
 
     for (int i = 0; i < 10; i++) {
-        Agent agent = Agent();
+        Agent agent = Agent(turnDuration, impatienceDistr(gen), profitDistr(gen));
         agent.activity = Activities::SmithRuniteBar();
-        agent.priceStrategy = PriceStrategies::Default();
         agents.push_back(agent);
     }
 
     for (int i = 0; i < 10; i++) {
-        Agent agent = Agent();
+        Agent agent = Agent(turnDuration, impatienceDistr(gen), profitDistr(gen));
         agent.activity = Activities::SmithRunePlatebody();
-        agent.priceStrategy = PriceStrategies::Default();
         agents.push_back(agent);
     }
 
-    for (int i = 0; i < 3; i++) {
-        Agent agent = Agent();
+    for (int i = 0; i < 10; i++) {
+        Agent agent = Agent(turnDuration, impatienceDistr(gen), profitDistr(gen));
         agent.activity = Activities::CraftNatureRunes();
-        agent.priceStrategy = PriceStrategies::Default();
         agents.push_back(agent);
     }
 
-    for (int i = 0; i < 15; i++) {
-        Agent agent = Agent();
+    for (int i = 0; i < 20; i++) {
+        Agent agent = Agent(turnDuration, impatienceDistr(gen), profitDistr(gen));
         agent.activity = Activities::AlchRunePlatebody();
-        agent.priceStrategy = PriceStrategies::Default();
         agents.push_back(agent);
     }
 
-    // shuffle the agents
+    // randomize agent trade order
     std::random_shuffle(agents.begin(), agents.end());
     
     std::ofstream wf(params.dataPath, std::ios::out | std::ios::binary);
@@ -122,31 +128,45 @@ int main(int argc, char* const* argv) {
 
     std::pair<int, int> margin;
 
+    // empty shock trade ID
     TradeID shockID = TradeID(false, "null", std::make_pair(0, 0));
 
+
     for (int i = 0; i < params.numIterations; i++) {
+
+        // write to a file
         for (Agent &agent : agents) {
             agent.act(market);
         }
-        // std::cout << i << std::endl;
-        // market.print_market(false);
-        // std::cout << std::endl;
+
+        std::random_shuffle(agents.begin(), agents.end());
+
+        std::cout << i << std::endl;
+        market.print_market(false);
+        std::cout << std::endl;
+        std::cout << activity_profit(market, Activities::SmithRuniteBar(), turnDuration) << std::endl;
+        std::cout << std::endl;
 
         margin = market.get_unit_prices(params.itemName);
 
+
+
+        // ignore pre-equilibrium pricing
         if (i <= 5000) {
             continue;
         }
 
-        if (i == 7500) {
-            shockID = market.create_sell_trade(8000, "Runite Ore", 1000);
-        } else if (i > 7500) {
-            Trade shock = market.check_trade(shockID);
-            if (shock.status == TradeStatus::SUCCESS) {
-                market.cancel_trade(shockID);
-            }
-        }
+        // // model a shock at 7500 iterations
+        // if (i == 7500) {
+        //     shockID = market.create_sell_trade(8000, "Runite Ore", 1000);
+        // } else if (i > 7500) {
+        //     Trade shock = market.check_trade(shockID);
+        //     if (shock.status == TradeStatus::SUCCESS) {
+        //         market.cancel_trade(shockID);
+        //     }
+        // }
         
+        // write to the file
         wf.write(reinterpret_cast<const char*>(&i), sizeof(int32_t));
         wf.write(reinterpret_cast<const char*>(&(margin.first)), sizeof(int32_t));
         wf.write(reinterpret_cast<const char*>(&(margin.second)), sizeof(int32_t));

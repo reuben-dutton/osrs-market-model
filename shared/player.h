@@ -21,7 +21,7 @@ class Agent {
         std::vector<TradeID> trades;
         std::unordered_map<std::string, int> tradeFailures;
 
-        Agent();
+        Agent(int _turnDuration, int _impatience, int _profitMotive);
         void print_agent();
         void add_money(int _money);
         void remove_money(int _money);
@@ -34,6 +34,11 @@ class Agent {
         void remove_listing(Market &market, TradeID tradeID);
         void create_sell_listing(Market &market, std::string unitName, int unitCount);
         void create_buy_listing(Market &market, std::string unitName, int unitCount);
+    
+    private:
+        int turnDuration;
+        int impatience;
+        int profitMotive;
 };
 
 #endif

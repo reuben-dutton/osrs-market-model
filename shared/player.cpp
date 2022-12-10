@@ -10,12 +10,17 @@
 
 #include "market.h"
 #include "player.h"
+#include "strategies.h"
 
-Agent::Agent() {
+Agent::Agent(int _turnDuration, int _impatience, int _profitMotive) {
     money = 0;
     bank = {};
     trades = {};
     tradeFailures = {};
+    turnDuration = _turnDuration;
+    impatience = _impatience;
+    profitMotive = _profitMotive;
+    priceStrategy = new PriceStrategy(_impatience, _profitMotive);
 }
 
 void Agent::print_agent() {
@@ -60,12 +65,12 @@ void Agent::act(Market &market) {
     thread_local std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<> distrib(1, 100);
 
-    int activityProfit = activity_profit(market, activity);
+    int activityProfit = activity_profit(market, activity, turnDuration);
 
-    bool caresAboutProfit = distrib(gen) < 95;
+    bool caresAboutProfit = distrib(gen) < (100 - profitMotive);
 
     // the worse the profit, the more likely not to perform that activity
-    bool lazy = distrib(gen) < (80 - std::min(10000, activityProfit)*0.01);
+    bool lazy = distrib(gen) < (100 - impatience);
     // lazy = false;
 
     // activity switching // /// /// // // / // // // // /
@@ -83,12 +88,18 @@ void Agent::act(Market &market) {
     //     }
     // }
 
+    // profitMotive = 0 -> minProfit = 0
+    // profitMotive = 100 -> minProfit = 1000
+    // might turn into a logarithmic scale later
+    int minProfit = profitMotive * 0.01 * 10000 * ((float)turnDuration / (float)activity->duration);
+
+
     bool doingActivity = false;
     this->check_listings(market);
     // if not lazy and profit above 0, or doesn't care about profit
-    if ((!lazy && activityProfit > 0) || !caresAboutProfit) {
+    if ((!lazy && activityProfit > minProfit) || !caresAboutProfit) {
         doingActivity = true;
-        if (activity->has_required_items(bank)) {
+        if (activity->has_required_items(bank, turnDuration)) {
             this->perform_activity();
         }
     }
@@ -184,13 +195,18 @@ void Agent::remove_listing(Market &market, TradeID tradeID) {
     }
 }
 
+// add money input and output later
 void Agent::perform_activity() {
-    for (std::pair<std::string, int> requirement : activity->requirements) {
+    ItemVector requirements = activity->get_requirements(turnDuration);
+
+    for (std::pair<std::string, int> requirement : requirements) {
         std::string itemName = requirement.first;
         int itemCount = requirement.second;
         this->remove_item(itemName, itemCount);
     }
-    for (std::pair<std::string, int> product : activity->products) {
+
+    ItemVector products = activity->get_products(turnDuration);
+    for (std::pair<std::string, int> product : products) {
         std::string itemName = product.first;
         int itemCount = product.second;
         this->add_item(itemName, itemCount);
@@ -199,8 +215,7 @@ void Agent::perform_activity() {
 
 void Agent::create_sell_listing(Market &market, std::string unitName, int unitCount) {
     // calculate price
-    // int price = 100;
-    int price = this->priceStrategy->calculate_sell_price(market, this->activity, unitName, tradeFailures[unitName]);
+    int price = this->priceStrategy->calculate_sell_price(market, this->activity, turnDuration, unitName, tradeFailures[unitName]);
 
     // use price to create trade
     TradeID newTradeID = market.create_sell_trade(price, unitName, unitCount);
@@ -211,9 +226,8 @@ void Agent::create_sell_listing(Market &market, std::string unitName, int unitCo
 }
 
 void Agent::create_buy_listing(Market &market, std::string unitName, int unitCount) {
-    // get price
-    // int price = 100;
-    int price = this->priceStrategy->calculate_buy_price(market, this->activity, unitName, tradeFailures[unitName]);
+    // calculate price
+    int price = this->priceStrategy->calculate_buy_price(market, this->activity, turnDuration, unitName, tradeFailures[unitName]);
 
     // use price to create trade
     TradeID newTradeID = market.create_buy_trade(price, unitName, unitCount);

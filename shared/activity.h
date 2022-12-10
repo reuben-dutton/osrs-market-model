@@ -6,21 +6,37 @@
 #include <vector>
 #include <string>
 
+typedef std::vector<std::pair<std::string, int>> ItemVector;
+
 class Activity {
     public:
         std::string name;
-        std::vector<std::pair<std::string, int>> requirements;
-        std::vector<std::pair<std::string, int>> products;
+        int duration; // in ticks, for a single instance
+        // e.g. 5 ticks to high alch a single item
+
+        ItemVector requirements;
+        ItemVector products;
         int moneyOutput;
         int moneyInput;
 
-        Activity(std::string _name);
+        Activity(std::string _name, int _duration);
         void add_requirement(std::string itemName, int itemCount);
         void add_product(std::string itemName, int itemCount);
         void add_money_output(int _moneyOutput);
         void add_money_input(int _moneyInput);
         void print_activity();
-        bool has_required_items(std::map<std::string, int> bank);
+        bool has_required_items(std::map<std::string, int> bank, int activeDuration);
+
+        ItemVector get_products(int activeDuration);
+        ItemVector get_requirements(int activeDuration);
+
+
+    private:
+        int prevActiveDurationProducts;
+        int prevActiveDurationRequirements;
+        ItemVector activeRequirements;
+        ItemVector activeProducts;
+
 };
 
 class Activities {
