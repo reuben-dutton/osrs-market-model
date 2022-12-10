@@ -56,8 +56,8 @@ void Agent::remove_item(std::string itemName, int itemCount) {
 
 void Agent::act(Market &market) {
 
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    thread_local std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    thread_local std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<> distrib(1, 100);
 
     int activityProfit = activity_profit(market, activity);

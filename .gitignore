@@ -5,3 +5,4 @@ osrsmodel
 *.dat
 *.sh
 plots/
+gmon.out

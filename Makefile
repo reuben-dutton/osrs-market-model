@@ -1,6 +1,6 @@
 .PHONY: clean default all
 
-CXXFLAGS=-std=c++11 -Wall -O2 -fopenmp
+CXXFLAGS=-std=c++11 -Wall -O2 -pg -fopenmp
 CXX=mpic++
 HEADER=-I./shared -I./object
 

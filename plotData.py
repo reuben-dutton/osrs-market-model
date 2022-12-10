@@ -15,8 +15,8 @@ t = data[::3]
 prey = data[1::3]
 pred = data[2::3]
 
-plt.plot(t, prey, label="buy")
-plt.plot(t, pred, label="sell")
+plt.plot(t, prey, label="buy", linewidth=0.5)
+plt.plot(t, pred, label="sell", linewidth=0.5)
 plt.title(itemName)
 plt.xlabel("Timestep")
 plt.ylabel("gp")

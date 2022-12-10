@@ -128,9 +128,9 @@ int main(int argc, char* const* argv) {
         for (Agent &agent : agents) {
             agent.act(market);
         }
-        std::cout << i << std::endl;
-        market.print_market(false);
-        std::cout << std::endl;
+        // std::cout << i << std::endl;
+        // market.print_market(false);
+        // std::cout << std::endl;
 
         margin = market.get_unit_prices(params.itemName);
 
@@ -139,7 +139,7 @@ int main(int argc, char* const* argv) {
         }
 
         if (i == 7500) {
-            shockID = market.create_sell_trade(8000, "Runite Ore", 500);
+            shockID = market.create_sell_trade(8000, "Runite Ore", 1000);
         } else if (i > 7500) {
             Trade shock = market.check_trade(shockID);
             if (shock.status == TradeStatus::SUCCESS) {
