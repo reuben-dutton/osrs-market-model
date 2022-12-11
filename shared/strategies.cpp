@@ -53,6 +53,7 @@ int PriceStrategy::calculate_sell_price(Market &market, Activity* activity, int 
     int sellPrice = margin.second;
 
     int activityProfit = activity_profit(market, activity, turnDuration);
+    int scaledActivityProfit = activityProfit / ((float)turnDuration / (float)activity->duration);
 
     int finalPrice;
     
@@ -71,30 +72,32 @@ int PriceStrategy::calculate_sell_price(Market &market, Activity* activity, int 
     double largeAdjTend = ((100 - profitMotive) * 0.01) * (finalPrice * 0.001);
     int minPriceAdjustment = std::max((int)largeAdjTend, (int)smallAdjTend);
     // minPriceAdjustment = 10;
-    double failureAdj = (minPriceAdjustment * (prevFailures + 1) * impatience * 0.001);
-    minPriceAdjustment += (int)failureAdj;
+    double failureAdj = (minPriceAdjustment * (prevFailures + 1) * impatience * 0.0001);
+    // minPriceAdjustment += (int)failureAdj;
 
-    // maximum possible adjustment (in the case that the activity is unsuccessful) is the current profit
+    // maximum possible adjustment (in the case that the activity is unsuccessful) is the current profit (per unit)
     // adjusted by a factor corresponding to the agent's impatience (higher impatience, higher adjustment)
-    int failurePriceAdjustment = std::max((activityProfit * (impatience / 100)), minPriceAdjustment);
-    // failurePriceAdjustment = 10;
+    int failurePriceAdjustment = std::max((int)(scaledActivityProfit * (impatience * 0.001)), minPriceAdjustment);
+    failurePriceAdjustment = minPriceAdjustment;
 
     // maximum possible adjustment (in the case that the activity is successful) is a proportion of the
     // current price, adjusted by a factor corresponding to the agent's motivation to seek profit
-    // (this maxes out at 10%, minimal is minPriceAdjustment)
-    int successPriceAdjustment = std::max((finalPrice * (profitMotive / 1000)), minPriceAdjustment);
-    // successPriceAdjustment = 10;
+    // (this maxes out at 1%, minimal is minPriceAdjustment)
+    int successPriceAdjustment = std::max((int)(finalPrice * (profitMotive * 0.0001)), minPriceAdjustment);
+    successPriceAdjustment = minPriceAdjustment;
 
-    int minProfit = profitMotive * 0.01 * 10000 * ((float)turnDuration / (float)activity->duration);
+    int minProfit = profitMotive * 0.01 * 2000;
     // is the activity profitable?
-    bool profitable = (activityProfit - ((float)turnDuration / (float)activity->duration) > minProfit);
-    bool successful = (prevFailures < 2);
+    bool profitable = (scaledActivityProfit - 1 > minProfit);
+    bool successful = (prevFailures < 1);
 
     if (successful) {
         finalPrice += successPriceAdjustment;
     } else if (profitable) {
         // finalPrice -= failurePriceAdjustment * prevFailures; 
         finalPrice -= failurePriceAdjustment;
+    } else {
+        // finalPrice = buyPrice - minPriceAdjustment;
     }
 
     return std::max(finalPrice, 1);
@@ -106,6 +109,7 @@ int PriceStrategy::calculate_buy_price(Market &market, Activity* activity, int t
     int sellPrice = margin.second;
 
     int activityProfit = activity_profit(market, activity, turnDuration);
+    int scaledActivityProfit = activityProfit / ((float)turnDuration / (float)activity->duration);
 
     int finalPrice;
 
@@ -119,36 +123,38 @@ int PriceStrategy::calculate_buy_price(Market &market, Activity* activity, int t
     }
 
     // agents with more motivation to make profit will be more stringent when undercutting/overpricing
-    // 0 profit motive -> 20% under/over, 100 profit motive -> 0.1% under/over
+    // 0 profit motive -> 2% under/over, 100 profit motive -> 0.1% under/over
     double smallAdjTend = ((100 - profitMotive) * 0.01)*10 + 1;
     double largeAdjTend = ((100 - profitMotive) * 0.005) * (finalPrice * 0.001);
     int minPriceAdjustment = std::max((int)largeAdjTend, (int)smallAdjTend);
     // minPriceAdjustment = 10;
     double failureAdj = (minPriceAdjustment * (prevFailures + 1) * impatience * 0.001);
-    minPriceAdjustment += (int)failureAdj;
+    // minPriceAdjustment += (int)failureAdj;
 
     // maximum possible adjustment (in the case that the activity is unsuccessful) is the current profit
     // adjusted by a factor corresponding to the agent's impatience (higher impatience, higher adjustment)
-    int failurePriceAdjustment = std::max((activityProfit * (impatience / 100)), minPriceAdjustment);
-    // failurePriceAdjustment = 10;
+    int failurePriceAdjustment = std::max((int)(scaledActivityProfit * (impatience + 0.001)), minPriceAdjustment);
+    failurePriceAdjustment = minPriceAdjustment;
 
     // maximum possible adjustment (in the case that the activity is successful) is a proportion of the
     // current price, adjusted by a factor corresponding to the agent's motivation to seek profit
-    // (this maxes out at 10%, minimal is minPriceAdjustment)
-    int successPriceAdjustment = std::max((finalPrice * (profitMotive / 1000)), minPriceAdjustment);
-    // successPriceAdjustment = 10;
+    // (this maxes out at 1%, minimal is minPriceAdjustment)
+    int successPriceAdjustment = std::max((int)(finalPrice * (profitMotive * 0.0001)), minPriceAdjustment);
+    successPriceAdjustment = minPriceAdjustment;
 
-    int minProfit = profitMotive * 0.01 * 10000 * ((float)turnDuration / (float)activity->duration);
+    int minProfit = profitMotive * 0.01 * 2000;
     // is the activity profitable?
-    bool profitable = (activityProfit - ((float)turnDuration / (float)activity->duration) > minProfit);
+    bool profitable = (scaledActivityProfit - 1 > minProfit);
     // have our trade offers been successful?
-    bool successful = (prevFailures < 2);
+    bool successful = (prevFailures < 1);
 
     if (successful) {
         finalPrice -= successPriceAdjustment;
     } else if (profitable) {
         // finalPrice += failurePriceAdjustment * prevFailures;
         finalPrice += failurePriceAdjustment;
+    } else {
+        // finalPrice = sellPrice + minPriceAdjustment;
     }
 
     return std::max(finalPrice, 1);

@@ -66,8 +66,9 @@ void Agent::act(Market &market) {
     std::uniform_int_distribution<> distrib(1, 100);
 
     int activityProfit = activity_profit(market, activity, turnDuration);
+    int scaledActivityProfit = activityProfit / ((float)turnDuration / (float)activity->duration);
 
-    bool caresAboutProfit = distrib(gen) < (100 - profitMotive);
+    bool caresAboutProfit = distrib(gen) < 85;
 
     // the worse the profit, the more likely not to perform that activity
     bool lazy = distrib(gen) < (100 - impatience);
@@ -91,19 +92,19 @@ void Agent::act(Market &market) {
     // profitMotive = 0 -> minProfit = 0
     // profitMotive = 100 -> minProfit = 1000
     // might turn into a logarithmic scale later
-    int minProfit = profitMotive * 0.01 * 10000 * ((float)turnDuration / (float)activity->duration);
+    int minProfit = profitMotive * 0.01 * 2000;
 
 
     bool doingActivity = false;
     this->check_listings(market);
-    // if not lazy and profit above 0, or doesn't care about profit
-    if ((!lazy && activityProfit > minProfit) || !caresAboutProfit) {
+    // if not lazy and profit above min profit, or doesn't care about profit
+    if ((!lazy && scaledActivityProfit > minProfit) || !caresAboutProfit) {
         doingActivity = true;
-        if (activity->has_required_items(bank, turnDuration)) {
-            this->perform_activity();
-        }
     }
     this->create_listings(market, doingActivity);
+    if (doingActivity && activity->has_required_items(bank, turnDuration)) {
+        this->perform_activity();
+    }
 }
 
 void Agent::create_listings(Market &market, bool doingActivity) {

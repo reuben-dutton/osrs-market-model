@@ -81,37 +81,37 @@ int main(int argc, char* const* argv) {
     std::uniform_int_distribution<> profitDistr(20, 60);
 
     // initialize agents
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 30; i++) {
         Agent agent = Agent(turnDuration, impatienceDistr(gen), profitDistr(gen));
         agent.activity = Activities::MineRunite();
         agents.push_back(agent);
     }
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 30; i++) {
         Agent agent = Agent(turnDuration, impatienceDistr(gen), profitDistr(gen));
         agent.activity = Activities::MineCoal();
         agents.push_back(agent);
     }
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 30; i++) {
         Agent agent = Agent(turnDuration, impatienceDistr(gen), profitDistr(gen));
         agent.activity = Activities::SmithRuniteBar();
         agents.push_back(agent);
     }
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 30; i++) {
         Agent agent = Agent(turnDuration, impatienceDistr(gen), profitDistr(gen));
         agent.activity = Activities::SmithRunePlatebody();
         agents.push_back(agent);
     }
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 30; i++) {
         Agent agent = Agent(turnDuration, impatienceDistr(gen), profitDistr(gen));
         agent.activity = Activities::CraftNatureRunes();
         agents.push_back(agent);
     }
 
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 60; i++) {
         Agent agent = Agent(turnDuration, impatienceDistr(gen), profitDistr(gen));
         agent.activity = Activities::AlchRunePlatebody();
         agents.push_back(agent);
@@ -144,7 +144,7 @@ int main(int argc, char* const* argv) {
         std::cout << i << std::endl;
         market.print_market(false);
         std::cout << std::endl;
-        std::cout << activity_profit(market, Activities::SmithRuniteBar(), turnDuration) << std::endl;
+        std::cout << activity_profit(market, Activities::AlchRunePlatebody(), turnDuration) << std::endl;
         std::cout << std::endl;
 
         margin = market.get_unit_prices(params.itemName);
@@ -152,7 +152,7 @@ int main(int argc, char* const* argv) {
 
 
         // ignore pre-equilibrium pricing
-        if (i <= 5000) {
+        if (i <= 10000-288) {
             continue;
         }
 
